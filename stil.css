@@ -87,6 +87,9 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
 .btn + .btn { margin-top: 10px; }
 .btn:active { transform: scale(.98); }
 
+.kunye { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: #94a3b8; }
+.kunye a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+
 .ipucu {
   margin-top: 14px;
   padding: 14px;
