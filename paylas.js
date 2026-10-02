@@ -1,0 +1,124 @@
+/*
+ * Paylaşım sitesi — kişi sayfasının tarayıcı kodu.
+ * `npm run paylasim` bu dosyayı paylasim-sitesi/ köküne kopyalar.
+ *
+ * Bağımlılık yok, derleme yok: düz tarayıcı JavaScript'i. Sayfadaki
+ * <script id="veri"> kişinin eksen profilini taşır.
+ */
+(function () {
+  "use strict";
+
+  var veri = JSON.parse(document.getElementById("veri").textContent);
+
+  /* ---------- 1. Ziyaretçinin profili (?p) ---------- */
+
+  // share-code.ts decodeProfile ile aynı biçim: eksen başına 2 karakter, 36'lık taban.
+  function decode(code, n) {
+    if (!code || code.length !== n * 2 || !/^[0-9a-z]+$/.test(code)) return null;
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var v = parseInt(code.slice(i * 2, i * 2 + 2), 36);
+      if (isNaN(v) || v < 0 || v > 100) return null;
+      out.push(v);
+    }
+    return out;
+  }
+
+  // engine.ts pearson + toCompatibility ile birebir aynı hesap: telefondaki
+  // uyum yüzdesi stanttaki ekranla aynı çıkmalı.
+  function pearson(a, b) {
+    var n = a.length;
+    var ma = 0;
+    var mb = 0;
+    for (var i = 0; i < n; i++) {
+      ma += a[i];
+      mb += b[i];
+    }
+    ma /= n;
+    mb /= n;
+    var num = 0;
+    var da = 0;
+    var db = 0;
+    for (var j = 0; j < n; j++) {
+      num += (a[j] - ma) * (b[j] - mb);
+      da += (a[j] - ma) * (a[j] - ma);
+      db += (b[j] - mb) * (b[j] - mb);
+    }
+    var den = Math.sqrt(da * db);
+    return den === 0 ? 0 : num / den;
+  }
+  function compatibility(r) {
+    return Math.min(99, Math.max(41, Math.round(55 + 45 * r)));
+  }
+
+  var user = decode(new URLSearchParams(location.search).get("p"), veri.axes.length);
+  if (user) {
+    var uyum = document.getElementById("uyum");
+    uyum.textContent = "%" + compatibility(pearson(user, veri.profile) * veri.weight) + " uyum";
+    uyum.hidden = false;
+
+    // your-profile.tsx ile aynı görüntüleme ölçeği: tepe eksen %100.
+    var peak = Math.max.apply(null, user.concat([1]));
+    var box = document.getElementById("cubuklar");
+    veri.axes.forEach(function (axis, i) {
+      var pct = Math.round((user[i] / peak) * 100);
+      var row = document.createElement("div");
+      row.className = "cubuk";
+      var label = document.createElement("div");
+      label.className = "etiket";
+      label.textContent = axis.emoji + " " + axis.label;
+      var value = document.createElement("span");
+      value.textContent = String(pct);
+      label.appendChild(value);
+      var track = document.createElement("div");
+      track.className = "iz";
+      var fill = document.createElement("div");
+      fill.style.width = pct + "%";
+      fill.style.background = axis.color;
+      track.appendChild(fill);
+      row.appendChild(label);
+      row.appendChild(track);
+      box.appendChild(row);
+    });
+    document.getElementById("profil").hidden = false;
+  }
+
+  /* ---------- 2. Hikâyende paylaş ---------- */
+
+  // Dosya SAYFA AÇILIRKEN hazırlanır: Safari, navigator.share'i yalnızca
+  // dokunuşun hemen ardından kabul eder. Dokunuştan sonra fetch beklenirse
+  // izin düşer ve paylaşım menüsü açılmaz.
+  var file = null;
+  fetch("hikaye.png")
+    .then(function (res) {
+      return res.blob();
+    })
+    .then(function (blob) {
+      file = new File([blob], veri.slug + "-hikaye.png", { type: "image/png" });
+    })
+    .catch(function () {
+      /* görsel alınamazsa düğme kaydetmeye düşer */
+    });
+
+  var ipucu = document.getElementById("ipucu");
+  var kaydet = document.getElementById("kaydet");
+
+  document.getElementById("paylas-btn").addEventListener("click", function () {
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Yalnızca dosya: metin eklenirse bazı Android hedefleri görseli düşürüyor.
+      navigator.share({ files: [file] }).catch(function (err) {
+        if (err && err.name === "AbortError") return; // kullanıcı vazgeçti
+        kaydet.click();
+        ipucu.hidden = false;
+      });
+      return;
+    }
+    // Dosya paylaşımı yoksa (çoğunlukla masaüstü): indir ve yolu göster.
+    kaydet.click();
+    ipucu.hidden = false;
+  });
+
+  kaydet.addEventListener("click", function () {
+    ipucu.hidden = false;
+  });
+})();
