@@ -10,6 +10,14 @@
 
   var veri = JSON.parse(document.getElementById("veri").textContent);
 
+  /** Küçük DOM yardımcısı: metin her zaman textContent ile (HTML enjeksiyonu yok). */
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
   /* ---------- 1. Ziyaretçinin profili (?p) ---------- */
 
   // share-code.ts decodeProfile ile aynı biçim: eksen başına 2 karakter, 36'lık taban.
@@ -59,28 +67,54 @@
 
     // your-profile.tsx ile aynı görüntüleme ölçeği: tepe eksen %100.
     var peak = Math.max.apply(null, user.concat([1]));
+    var pcts = user.map(function (v) {
+      return Math.round((v / peak) * 100);
+    });
+    // En güçlü iki eksen rozet alır (dominantAxes ile aynı fikir: en yüksek 2).
+    var top2 = pcts
+      .map(function (p, i) {
+        return { p: p, i: i };
+      })
+      .sort(function (a, b) {
+        return b.p - a.p;
+      })
+      .slice(0, 2)
+      .map(function (x) {
+        return x.i;
+      });
+
     var box = document.getElementById("cubuklar");
+    var fills = [];
     veri.axes.forEach(function (axis, i) {
-      var pct = Math.round((user[i] / peak) * 100);
-      var row = document.createElement("div");
-      row.className = "cubuk";
-      var label = document.createElement("div");
-      label.className = "etiket";
-      label.textContent = axis.emoji + " " + axis.label;
-      var value = document.createElement("span");
-      value.textContent = String(pct);
-      label.appendChild(value);
-      var track = document.createElement("div");
-      track.className = "iz";
-      var fill = document.createElement("div");
-      fill.style.width = pct + "%";
-      fill.style.background = axis.color;
+      var row = el("div", "cubuk" + (top2.indexOf(i) >= 0 ? " tepe" : ""));
+      row.style.setProperty("--renk", axis.color);
+
+      var head = el("div", "cubuk-ust");
+      head.appendChild(el("span", "ikon", axis.emoji));
+      head.appendChild(el("span", "ad", axis.label));
+      if (top2.indexOf(i) >= 0) head.appendChild(el("span", "rozet-tepe", "En güçlü"));
+      head.appendChild(el("span", "deger", String(pcts[i])));
+
+      var track = el("div", "iz");
+      var fill = el("div", "dolgu");
       track.appendChild(fill);
-      row.appendChild(label);
+      fills.push({ node: fill, pct: pcts[i], i: i });
+
+      row.appendChild(head);
       row.appendChild(track);
       box.appendChild(row);
     });
     document.getElementById("profil").hidden = false;
+
+    // Çubuklar 0'dan dolarak açılır (CSS geçişi; hareket azaltma tercihinde anında).
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fills.forEach(function (f) {
+          f.node.style.transitionDelay = f.i * 70 + "ms";
+          f.node.style.width = Math.max(f.pct, 3) + "%";
+        });
+      });
+    });
   }
 
   /* ---------- 2. Hikâyende paylaş ---------- */
