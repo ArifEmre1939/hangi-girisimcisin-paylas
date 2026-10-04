@@ -70,10 +70,11 @@
     var pcts = user.map(function (v) {
       return Math.round((v / peak) * 100);
     });
-    // En güçlü iki eksen rozet alır (dominantAxes ile aynı fikir: en yüksek 2).
-    var top2 = pcts
-      .map(function (p, i) {
-        return { p: p, i: i };
+    // En güçlü iki eksen rozet alır — engine.ts dominantAxes ile aynı kural:
+    // yuvarlanmamış değere göre azalan, eşitlikte eksen sırası (sort kararlı).
+    var top2 = user
+      .map(function (v, i) {
+        return { p: v, i: i };
       })
       .sort(function (a, b) {
         return b.p - a.p;

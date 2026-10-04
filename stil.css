@@ -185,6 +185,8 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
   text-transform: uppercase;
   color: #fff;
   background: var(--renk);
+  /* Açık renklerde (sarı) beyaz yazı okunsun: uygulamadaki axis-bar.tsx ile aynı %72 koyulaştırma. */
+  background: color-mix(in srgb, var(--renk) 72%, black);
 }
 .deger {
   flex-shrink: 0;
@@ -194,6 +196,7 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--renk);
+  color: color-mix(in srgb, var(--renk) 72%, black);
 }
 .iz {
   height: 12px;
