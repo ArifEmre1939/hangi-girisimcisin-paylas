@@ -30,6 +30,30 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
   box-shadow: 0 24px 60px -24px rgba(76, 29, 149, .55);
 }
 .kart .emoji { font-size: 56px; line-height: 1; }
+/* Portre + köşede emoji rozeti — uygulamadaki sonuç kartıyla aynı ölçüler. */
+.portre { position: relative; width: 128px; height: 128px; margin: 0 auto; }
+.portre img {
+  display: block;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .4), 0 10px 24px -8px rgba(15, 23, 42, .45);
+}
+.rozet {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .25);
+}
 .kart h1 { margin: 14px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
 .kart .unvan { margin: 6px 0 0; font-size: 14px; font-weight: 600; opacity: .82; line-height: 1.45; }
 .kart .slogan { margin: 18px auto 0; max-width: 340px; font-size: 17px; font-weight: 700; line-height: 1.35; }
@@ -87,7 +111,7 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
 .btn + .btn { margin-top: 10px; }
 .btn:active { transform: scale(.98); }
 
-.kunye { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: #94a3b8; }
+.kunye { margin: 8px 4px 0; text-align: center; font-size: 11px; line-height: 1.5; color: #94a3b8; }
 .kunye a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
 
 .ipucu {
