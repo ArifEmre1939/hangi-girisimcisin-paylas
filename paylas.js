@@ -61,9 +61,17 @@
 
   var user = decode(new URLSearchParams(location.search).get("p"), veri.axes.length);
   if (user) {
-    var uyum = document.getElementById("uyum");
-    uyum.textContent = "%" + compatibility(pearson(user, veri.profile) * veri.weight) + " uyum";
-    uyum.hidden = false;
+    // Uyum halkası (portrenin köşesi) — uygulamadaki compat-ring.tsx ile aynı.
+    var yuzde = compatibility(pearson(user, veri.profile) * veri.weight);
+    document.getElementById("uyum").textContent = "%" + yuzde;
+    document.getElementById("halka").hidden = false;
+    var dolu = document.getElementById("halka-dolu");
+    var cevre = 2 * Math.PI * 40; // r=40, build.tsx portraitHtml ile aynı
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        dolu.style.strokeDashoffset = String(cevre * (1 - yuzde / 100));
+      });
+    });
 
     // your-profile.tsx ile aynı görüntüleme ölçeği: tepe eksen %100.
     var peak = Math.max.apply(null, user.concat([1]));
@@ -91,9 +99,14 @@
       row.style.setProperty("--renk", axis.color);
 
       var head = el("div", "cubuk-ust");
-      head.appendChild(el("span", "ikon", axis.emoji));
+      var ikon = el("span", "ikon");
+      ikon.setAttribute("aria-hidden", "true");
+      // axis.icon: build.tsx'in derlemede ürettiği SVG (ui/glyph.tsx) — kullanıcı
+      // girdisi değil, sitenin kendi çıktısı; bu yüzden innerHTML güvenli.
+      ikon.innerHTML = axis.icon;
+      head.appendChild(ikon);
       head.appendChild(el("span", "ad", axis.label));
-      if (top2.indexOf(i) >= 0) head.appendChild(el("span", "rozet-tepe", "En güçlü"));
+      if (top2.indexOf(i) >= 0) head.appendChild(el("span", "rozet-tepe", "en güçlü"));
       head.appendChild(el("span", "deger", String(pcts[i])));
 
       var track = el("div", "iz");

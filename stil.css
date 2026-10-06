@@ -1,95 +1,142 @@
 /* Paylaşım sitesi — `npm run paylasim` paylasim-sitesi/ köküne kopyalar.
- * Sistem fontu: telefonda ek indirme olmadan anında açılsın. */
+ * 2026-10-06: uygulamanın yeni tasarımıyla aynı dil (src/app/globals.css'teki
+ * anlamsal renkler, hep aydınlık). Renk değiştirirken İKİ dosyayı birlikte değiştir.
+ * Yazı tipi sistem fontu: telefonda ek indirme olmadan anında açılsın. */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+:root {
+  --canvas: #fcfaff;
+  --surface: #ffffff;
+  --surface-2: #f5f1fe;
+  --line: #ece6f8;
+  --ink: #2b2142;
+  --muted: #7a7190;
+  --faint: #a49cb8;
+  --accent: #7c3aed;
+  --accent-strong: #6d28d9;
+  --accent-soft: #f2ecff;
+  /* Hep aydınlık: tarayıcı kendi karanlık temasını uygulamasın. */
+  color-scheme: light;
+}
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 body {
   margin: 0;
   min-height: 100dvh;
+  overflow-x: clip;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #0f172a;
-  background: #faf7ff;
+  color: var(--ink);
+  background: var(--canvas);
 }
-main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
+/* Film greni — uygulamadaki body::before ile aynı. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.6  0 0 0 1.4 -0.35'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+}
+/* viewport-fit=cover ile sayfa çentiğin ve alt çubuğun altına uzanır; env() payı
+ * yazıları güvenli alanda tutar (yan tutuşta çentik, altta ana ekran çubuğu). */
+main {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(40px, calc(env(safe-area-inset-bottom) + 16px)) max(20px, env(safe-area-inset-left));
+}
 
 /* Kulüp rozeti (quiz.meta.club) — sayfanın en üstü. */
 .marka {
   display: block;
   width: max-content;
-  margin: 0 auto 14px;
-  padding: 7px 18px;
+  margin: 0 auto 18px;
+  padding: 6px 16px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: .18em;
-  color: #fff;
-  background: linear-gradient(90deg, var(--g1), var(--g2));
-  box-shadow: 0 8px 20px -10px rgba(76, 29, 149, .6);
-}
-
-.ust {
-  margin: 0 0 12px;
-  text-align: center;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: #94a3b8;
+  letter-spacing: .2em;
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
-.kart {
-  padding: 32px 22px;
-  border-radius: 28px;
-  text-align: center;
-  color: #fff;
-  background: linear-gradient(140deg, var(--g1), var(--g2));
-  box-shadow: 0 24px 60px -24px rgba(76, 29, 149, .55);
-}
-.kart .emoji { font-size: 56px; line-height: 1; }
-/* Portre + köşede emoji rozeti — uygulamadaki sonuç kartıyla aynı ölçüler. */
-.portre { position: relative; width: 128px; height: 128px; margin: 0 auto; }
-.portre img {
-  display: block;
-  width: 128px;
-  height: 128px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, .4), 0 10px 24px -8px rgba(15, 23, 42, .45);
-}
-.rozet {
+.ust { margin: 0; text-align: center; font-size: 14px; font-weight: 500; color: var(--muted); }
+
+/* ---------- Sonuç kartı (uygulamadaki sonuç sayfasının telefon hâli) ---------- */
+.kart { text-align: center; }
+.portre-alan { position: relative; width: max-content; margin: 22px auto 0; }
+.yorunge {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  left: 50%;
+  top: 50%;
+  width: 320px;
+  height: 320px;
+  transform: translate(-50%, -50%);
+  color: var(--accent);
+  opacity: .25;
+  pointer-events: none;
+}
+.portre {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #fff;
-  font-size: 24px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .25);
+  width: 192px;
+  height: 192px;
+  overflow: hidden;
+  border-radius: 34px;
+  font-size: 72px;
+  background: linear-gradient(140deg, var(--g1), var(--g2));
+  /* Kişinin kart renginde yumuşak gölge: her sonuç kendi tonunu taşır. */
+  box-shadow: 0 26px 56px -28px var(--g1);
 }
-.kart h1 { margin: 14px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
-.kart .unvan { margin: 6px 0 0; font-size: 14px; font-weight: 600; opacity: .82; line-height: 1.45; }
-.kart .slogan { margin: 18px auto 0; max-width: 340px; font-size: 17px; font-weight: 700; line-height: 1.35; }
-.kart .uyum {
-  display: inline-block;
-  margin: 18px 0 0;
+.portre img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Uyum halkası (yalnızca ?p varken; paylas.js doldurur) */
+.halka {
+  position: absolute;
+  right: -30px;
+  bottom: -18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 12px 30px -14px rgba(43, 33, 66, .45);
+}
+.halka svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.halka .iz-halka { stroke: var(--accent-soft); }
+.halka .dolu-halka { stroke: var(--accent); transition: stroke-dashoffset .9s cubic-bezier(.2, .8, .2, 1); }
+.halka p { position: relative; margin: 0; line-height: 1; }
+.halka b { display: block; font-size: 21px; font-weight: 800; letter-spacing: -.02em; }
+.halka span { display: block; margin-top: 3px; font-size: 11px; font-weight: 600; color: var(--muted); }
+
+.kunye { margin: 26px auto 0; max-width: 320px; text-align: center; font-size: 11px; line-height: 1.5; color: var(--faint); }
+.kunye a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+
+.kart h1 { margin: 16px 0 0; font-size: 40px; font-weight: 800; line-height: 1.02; letter-spacing: -.03em; text-wrap: balance; }
+.kart .unvan { margin: 8px 0 0; font-size: 15px; font-weight: 500; color: var(--muted); line-height: 1.45; }
+.kart .slogan { margin: 16px auto 0; max-width: 340px; font-size: 17px; font-style: italic; line-height: 1.4; text-wrap: pretty; }
+.etiketler { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.etiketler li {
   padding: 6px 14px;
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, .22);
+  background: var(--surface);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
-.paylas {
-  margin-top: 18px;
+/* ---------- Kartlar ---------- */
+.paylas, .profil {
+  margin-top: 22px;
   padding: 20px;
-  border-radius: 28px;
-  background: #fff;
-  box-shadow: 0 8px 30px -12px rgba(76, 29, 149, .18);
-  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
 }
+.paylas { text-align: center; }
 .onizleme {
   display: block;
   width: auto;
@@ -98,125 +145,120 @@ main { max-width: 460px; margin: 0 auto; padding: 24px 16px 40px; }
   max-height: 52dvh;
   margin: 20px auto 0;
   border-radius: 18px;
-  box-shadow: 0 12px 30px -12px rgba(15, 23, 42, .35);
+  box-shadow: 0 16px 36px -18px rgba(43, 33, 66, .45);
 }
 
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   width: 100%;
-  min-height: 52px;
-  border: 0;
-  border-radius: 999px;
+  min-height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   font: inherit;
   font-size: 16px;
   font-weight: 700;
   text-decoration: none;
-  color: #5b21b6;
-  background: #f3e8ff;
+  color: var(--ink);
+  background: var(--surface);
   cursor: pointer;
+  transition: transform .2s, background-color .2s, border-color .2s;
 }
+.btn svg { flex-shrink: 0; }
 .btn.ana {
+  border-color: transparent;
   color: #fff;
-  /* Instagram renkleri */
-  background: linear-gradient(90deg, #f58529, #dd2a7b 45%, #8134af 75%, #515bd4);
-  box-shadow: 0 10px 24px -10px rgba(221, 42, 123, .6);
+  background: var(--accent);
+  box-shadow: 0 12px 28px -14px rgba(124, 58, 237, .8);
 }
+.btn.ana:hover { background: var(--accent-strong); }
+.btn:not(.ana):hover { border-color: var(--accent); color: var(--accent); }
 .btn + .btn { margin-top: 10px; }
 .btn:active { transform: scale(.98); }
-
-.kunye { margin: 8px 4px 0; text-align: center; font-size: 11px; line-height: 1.5; color: #94a3b8; }
-.kunye a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(124, 58, 237, .3); }
 
 .ipucu {
   margin-top: 14px;
   padding: 14px;
+  border: 1px solid rgba(251, 191, 36, .45);
   border-radius: 16px;
-  background: #fffbeb;
-  color: #78350f;
+  background: rgba(251, 191, 36, .1);
   font-size: 14px;
   line-height: 1.5;
   text-align: left;
 }
 .ipucu p { margin: 0 0 8px; }
-.ipucu a { color: #b45309; font-weight: 700; }
+.ipucu a { color: var(--accent); font-weight: 700; }
 
-.profil {
-  margin-top: 18px;
-  padding: 20px;
-  border-radius: 28px;
-  background: #fff;
-  box-shadow: 0 8px 30px -12px rgba(76, 29, 149, .18);
-}
-.profil h2 { margin: 0; font-size: 18px; }
-.profil .alt { margin: 4px 0 16px; font-size: 13px; color: #64748b; }
-/* Profil çubukları. --renk her satırda eksenin rengi (paylas.js verir).
- * color-mix desteklemeyen eski tarayıcılar önceki satırdaki yedek rengi kullanır. */
-.cubuk { --renk: #7c3aed; padding: 10px 12px; border-radius: 16px; }
-.cubuk + .cubuk { margin-top: 6px; }
-.cubuk.tepe {
-  background: #faf5ff;
-  background: color-mix(in srgb, var(--renk) 8%, white);
-  box-shadow: inset 0 0 0 1.5px rgba(124, 58, 237, .15);
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--renk) 30%, transparent);
-}
-.cubuk-ust { display: flex; align-items: center; gap: 10px; }
+/* ---------- Profil çubukları (uygulamadaki ui/axis-bar.tsx ile aynı) ---------- */
+.profil h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.profil .alt { margin: 4px 0 8px; font-size: 14px; color: var(--muted); }
+/* --renk her satırda eksenin rengi (paylas.js verir). Her eksen kendi rengini korur
+ * (kullanıcı kararı). color-mix desteklemeyen eski tarayıcılar önceki satırdaki yedeği kullanır. */
+.cubuk { --renk: #7c3aed; padding: 10px 0; }
+.cubuk-ust { display: flex; align-items: center; gap: 12px; }
 .ikon {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 11px;
-  font-size: 18px;
-  background: #f1f5f9;
-  background: color-mix(in srgb, var(--renk) 16%, white);
+  color: var(--renk);
+  background: #f5f1fe;
+  background: color-mix(in srgb, var(--renk) 15%, transparent);
 }
-.ad { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: #1e293b; }
+.ad { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
 .rozet-tepe {
   flex-shrink: 0;
-  padding: 3px 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--renk);
+  border-color: color-mix(in srgb, var(--renk) 45%, transparent);
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: #fff;
-  background: var(--renk);
-  /* Açık renklerde (sarı) beyaz yazı okunsun: uygulamadaki axis-bar.tsx ile aynı %72 koyulaştırma. */
-  background: color-mix(in srgb, var(--renk) 72%, black);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--renk);
+  color: color-mix(in srgb, var(--renk) 72%, var(--ink));
 }
 .deger {
   flex-shrink: 0;
-  min-width: 30px;
+  min-width: 36px;
   text-align: right;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--renk);
-  color: color-mix(in srgb, var(--renk) 72%, black);
+  color: color-mix(in srgb, var(--renk) 72%, var(--ink));
 }
 .iz {
-  height: 12px;
-  margin: 8px 0 0 44px;
+  height: 10px;
+  margin: 8px 0 0 48px;
   border-radius: 999px;
   overflow: hidden;
-  background: #f1f5f9;
-  background: color-mix(in srgb, var(--renk) 12%, #f1f5f9);
+  background: var(--surface-2);
+  background: color-mix(in srgb, var(--renk) 12%, var(--surface-2));
 }
 .dolgu {
   width: 0;
   height: 100%;
   border-radius: 999px;
   background: var(--renk);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--renk) 55%, white), var(--renk));
-  box-shadow: 0 2px 8px -2px var(--renk);
+  opacity: .8;
   transition: width .9s cubic-bezier(.2, .8, .2, 1);
 }
-@media (prefers-reduced-motion: reduce) { .dolgu { transition: none; } }
+.cubuk.tepe .dolgu { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .dolgu, .halka .dolu-halka { transition: none; } }
 
-footer { margin-top: 28px; text-align: center; font-size: 12px; line-height: 1.6; color: #94a3b8; }
+/* ---------- Ana sayfa (QR'sız gelenler) ---------- */
+.giris { position: relative; padding-top: 24px; }
+.giris .yorunge { left: auto; right: -110px; top: -40px; transform: none; width: 280px; height: 280px; }
+.giris .etiket { position: relative; margin: 0; font-size: 14px; font-weight: 500; color: var(--muted); }
+.giris h1 { position: relative; margin: 10px 0 0; font-size: 46px; font-weight: 800; line-height: .98; letter-spacing: -.035em; }
+.giris p.metin { position: relative; margin: 16px 0 0; font-size: 17px; line-height: 1.55; color: var(--muted); }
+
+footer { margin-top: 28px; text-align: center; font-size: 12px; line-height: 1.6; color: var(--faint); }
 
 [hidden] { display: none !important; }
