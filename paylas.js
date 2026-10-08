@@ -131,27 +131,76 @@
     });
   }
 
-  /* ---------- 2. Hikâyende paylaş ---------- */
+  /* ---------- 2. Şablon seçimi ve hikâyende paylaş ---------- */
 
-  // Dosya SAYFA AÇILIRKEN hazırlanır: Safari, navigator.share'i yalnızca
-  // dokunuşun hemen ardından kabul eder. Dokunuştan sonra fetch beklenirse
-  // izin düşer ve paylaşım menüsü açılmaz.
-  var file = null;
-  fetch("hikaye.png")
-    .then(function (res) {
-      return res.blob();
-    })
-    .then(function (blob) {
-      file = new File([blob], veri.slug + "-hikaye.png", { type: "image/png" });
-    })
-    .catch(function () {
-      /* görsel alınamazsa düğme kaydetmeye düşer */
-    });
-
+  // Kaydırılabilir şablonlar (build.tsx STORY_TEMPLATES). Hangisi ortadaysa
+  // "paylaş" ve "kaydet" onu kullanır.
+  var kutu = document.getElementById("sablonlar");
+  var sablonlar = Array.prototype.slice.call(kutu.querySelectorAll(".sablon"));
+  var noktalar = Array.prototype.slice.call(document.querySelectorAll("#noktalar .nokta"));
   var ipucu = document.getElementById("ipucu");
   var kaydet = document.getElementById("kaydet");
+  var secili = 0;
+
+  // Dosyalar SAYFA AÇILIRKEN hazırlanır: Safari, navigator.share'i yalnızca
+  // dokunuşun hemen ardından kabul eder. Dokunuştan sonra fetch beklenirse
+  // izin düşer ve paylaşım menüsü açılmaz. İki şablon da baştan indirilir.
+  var dosyalar = sablonlar.map(function () {
+    return null;
+  });
+  sablonlar.forEach(function (s, i) {
+    var ad = s.getAttribute("data-dosya");
+    fetch(ad)
+      .then(function (res) {
+        return res.blob();
+      })
+      .then(function (blob) {
+        dosyalar[i] = new File([blob], veri.slug + "-" + ad, { type: "image/png" });
+      })
+      .catch(function () {
+        /* görsel alınamazsa düğme kaydetmeye düşer */
+      });
+  });
+
+  function sec(i) {
+    secili = i;
+    noktalar.forEach(function (n, j) {
+      n.classList.toggle("aktif", j === i);
+      n.setAttribute("aria-current", j === i ? "true" : "false");
+    });
+    var ad = sablonlar[i].getAttribute("data-dosya");
+    kaydet.setAttribute("href", ad);
+    kaydet.setAttribute("download", veri.slug + "-" + ad);
+  }
+
+  // Kaydırma bitince ortadaki şablonu seç (scroll-snap; kütüphane yok).
+  var bekle = null;
+  kutu.addEventListener("scroll", function () {
+    clearTimeout(bekle);
+    bekle = setTimeout(function () {
+      var orta = kutu.scrollLeft + kutu.clientWidth / 2;
+      var en = 0;
+      var fark = Infinity;
+      sablonlar.forEach(function (s, i) {
+        var d = Math.abs(s.offsetLeft + s.offsetWidth / 2 - orta);
+        if (d < fark) {
+          fark = d;
+          en = i;
+        }
+      });
+      if (en !== secili) sec(en);
+    }, 80);
+  });
+  noktalar.forEach(function (n, i) {
+    n.addEventListener("click", function () {
+      var s = sablonlar[i];
+      kutu.scrollTo({ left: s.offsetLeft - (kutu.clientWidth - s.offsetWidth) / 2, behavior: "smooth" });
+      sec(i);
+    });
+  });
 
   document.getElementById("paylas-btn").addEventListener("click", function () {
+    var file = dosyalar[secili];
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       // Yalnızca dosya: metin eklenirse bazı Android hedefleri görseli düşürüyor.
       navigator.share({ files: [file] }).catch(function (err) {
@@ -168,5 +217,38 @@
 
   kaydet.addEventListener("click", function () {
     ipucu.hidden = false;
+  });
+
+  /* ---------- 3. Bağlantı çıkartması için linki kopyala ---------- */
+
+  // Instagram'ın bağlantı çıkartmasına yapıştırılır; hikâyeyi gören arkadaş
+  // dokunup teste gider. Pano izni yoksa link seçilebilir metin olarak çıkar.
+  var kopyala = document.getElementById("link-kopyala");
+  var yedek = document.getElementById("link-yedek");
+  function kopyalandi(ok) {
+    if (ok) {
+      kopyala.textContent = "Kopyalandı ✓";
+      kopyala.classList.add("tamam");
+      setTimeout(function () {
+        kopyala.textContent = "Kopyala";
+        kopyala.classList.remove("tamam");
+      }, 2200);
+    } else {
+      yedek.hidden = false;
+    }
+  }
+  kopyala.addEventListener("click", function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(veri.link).then(
+        function () {
+          kopyalandi(true);
+        },
+        function () {
+          kopyalandi(false);
+        },
+      );
+      return;
+    }
+    kopyalandi(false);
   });
 })();
